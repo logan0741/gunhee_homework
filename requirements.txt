@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Git is not a Python package dependency.
+# Install Git separately on the host, or use the Docker image in this folder.
