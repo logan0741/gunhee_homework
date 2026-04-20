@@ -1,6 +1,9 @@
-fastapi
-uvicorn[standard]
-python-multipart
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+python-multipart==0.0.22
+pydantic==2.12.5
+pytest==9.0.3
+httpx==0.28.1
 
 # Git is not a Python package dependency.
 # Install Git separately on the host, or use the Docker image in this folder.

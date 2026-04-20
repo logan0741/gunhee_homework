@@ -12,12 +12,24 @@ placeholder="Win a FREE prize now"></textarea><br><br>
 <h3 id="result"></h3>
 <script>
 function classify() {
-const text = document.getElementById("text").value;
+const text = document.getElementById("text").value.trim();
+if (!text) {
+document.getElementById("result").innerText = "안내: 분류할 문장을 입력해주세요.";
+return;
+}
 fetch("/classify", {
 method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
 body: JSON.stringify({text})
 })
-.then(res => res.json())
+.then(res => {
+if (!res.ok) {
+throw new Error("Request failed");
+}
+return res.json();
+})
 .then(data => {
 document.getElementById("result").innerText =
 "결과: " + data.label + " (score=" + data.score + ")";

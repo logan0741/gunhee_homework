@@ -5,3 +5,5 @@ __pycache__/
 .conda-env/
 
 .pytest_cache/
+.tmp_pytest/
+pytest-cache-files-*/
