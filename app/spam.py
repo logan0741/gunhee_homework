@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def check_spam(text: str) -> tuple[str, int]:
 	text = text.lower().strip()
 	if text == "":
