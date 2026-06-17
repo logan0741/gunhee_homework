@@ -1,77 +1,114 @@
 import os
 import sys
+import pickle
+
 import mlflow
+import mlflow.sklearn
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
 
 sys.path.insert(0, os.path.dirname(__file__))
-from app.spam import check_spam
+from data.dataset import DATASET
 
-TEST_DATA = [
-    ("hello world", "ham"),
-    ("how are you doing today", "ham"),
-    ("see you tomorrow morning", "ham"),
-    ("let's meet for lunch", "ham"),
-    ("good morning have a great day", "ham"),
-    ("free money win prize now", "spam"),
-    ("click here to buy now limited time offer", "spam"),
-    ("urgent cash bonus deal discount available", "spam"),
-    ("win winner cash prize free offer", "spam"),
-    ("free click win bonus discount deal", "spam"),
+_SPAM_KEYWORDS = [
+    "free", "win", "winner", "prize", "click",
+    "buy now", "urgent", "cash", "money", "offer", "deal",
+    "discount", "limited time", "bonus",
 ]
 
 
-def evaluate(data):
-    preds = []
-    for text, label in data:
-        pred, score = check_spam(text)
-        preds.append({"pred": pred, "label": label, "score": score, "correct": pred == label})
-    return preds
+def _keyword_predict(texts):
+    results = []
+    for text in texts:
+        t = text.lower()
+        hits = sum(1 for kw in _SPAM_KEYWORDS if kw in t)
+        results.append(1 if hits >= 2 else 0)
+    return results
 
 
-def compute_metrics(results):
-    total = len(results)
-    correct = sum(1 for r in results if r["correct"])
-    accuracy = correct / total
-
-    spam_actual = [r for r in results if r["label"] == "spam"]
-    spam_pred = [r for r in results if r["pred"] == "spam"]
-    true_positive = [r for r in spam_pred if r["label"] == "spam"]
-
-    precision = len(true_positive) / len(spam_pred) if spam_pred else 0.0
-    recall = len(true_positive) / len(spam_actual) if spam_actual else 0.0
-    f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
-
-    return {"accuracy": accuracy, "precision": precision, "recall": recall, "f1": f1}
+def compute_metrics(y_true, y_pred):
+    return {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, zero_division=0),
+        "recall": recall_score(y_true, y_pred, zero_division=0),
+        "f1": f1_score(y_true, y_pred, zero_division=0),
+    }
 
 
 def main():
-    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
-    mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment("spamcheck-auto-train")
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "")
+    if tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment("spamcheck-ml")
 
-    spam_keywords = [
-        "free", "win", "winner", "prize", "click",
-        "buy now", "urgent", "cash", "money", "offer", "deal",
-        "discount", "limited time", "bonus"
-    ]
+    texts = [item[0] for item in DATASET]
+    labels = [item[1] for item in DATASET]
 
-    with mlflow.start_run():
-        mlflow.log_param("n_keywords", len(spam_keywords))
-        mlflow.log_param("threshold", 2)
-        mlflow.log_param("n_samples", len(TEST_DATA))
+    X_train, X_test, y_train, y_test = train_test_split(
+        texts, labels, test_size=0.2, random_state=42, stratify=labels
+    )
 
-        results = evaluate(TEST_DATA)
-        metrics = compute_metrics(results)
+    max_features = int(os.getenv("MAX_FEATURES", "1000"))
+    ngram_max = int(os.getenv("NGRAM_MAX", "2"))
+    alpha = float(os.getenv("NB_ALPHA", "1.0"))
 
-        for name, value in metrics.items():
-            mlflow.log_metric(name, value)
+    pipeline = Pipeline([
+        ("tfidf", TfidfVectorizer(
+            max_features=max_features,
+            ngram_range=(1, ngram_max),
+            stop_words="english",
+        )),
+        ("clf", MultinomialNB(alpha=alpha)),
+    ])
 
-        mlflow.log_artifact("app/spam.py")
+    with mlflow.start_run() as run:
+        mlflow.log_params({
+            "model_type": "TF-IDF + MultinomialNB",
+            "max_features": max_features,
+            "ngram_range": f"(1,{ngram_max})",
+            "nb_alpha": alpha,
+            "train_samples": len(X_train),
+            "test_samples": len(X_test),
+        })
 
-        print(f"[train] tracking_uri={tracking_uri}")
-        print(f"[train] accuracy={metrics['accuracy']:.3f}  "
-              f"precision={metrics['precision']:.3f}  "
-              f"recall={metrics['recall']:.3f}  "
-              f"f1={metrics['f1']:.3f}")
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_test)
+
+        v2_metrics = compute_metrics(y_test, y_pred)
+        for k, v in v2_metrics.items():
+            mlflow.log_metric(f"v2_{k}", v)
+
+        v1_pred = _keyword_predict(X_test)
+        v1_metrics = compute_metrics(y_test, v1_pred)
+        for k, v in v1_metrics.items():
+            mlflow.log_metric(f"v1_{k}", v)
+
+        try:
+            mlflow.sklearn.log_model(
+                pipeline,
+                artifact_path="spam_pipeline",
+                registered_model_name="SpamClassifier",
+            )
+        except Exception as e:
+            print(f"[train] Model Registry not available: {e}")
+            mlflow.sklearn.log_model(pipeline, artifact_path="spam_pipeline")
+
+        os.makedirs("models", exist_ok=True)
+        model_path = "models/spam_pipeline.pkl"
+        with open(model_path, "wb") as f:
+            pickle.dump(pipeline, f)
+        mlflow.log_artifact(model_path)
+
+        print(f"[train] Run ID: {run.info.run_id}")
+        print(f"[train] V1 (keyword) accuracy={v1_metrics['accuracy']:.4f}  "
+              f"f1={v1_metrics['f1']:.4f}")
+        print(f"[train] V2 (ML)      accuracy={v2_metrics['accuracy']:.4f}  "
+              f"f1={v2_metrics['f1']:.4f}")
+
+    return v2_metrics
 
 
 if __name__ == "__main__":

@@ -9,3 +9,25 @@ services:
       PORT: "10000"
     volumes:
       - .:/app
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+  mlflow:
+    build:
+      context: ./mlflow-server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow/data
+      - mlflow-artifacts:/mlflow/artifacts
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mlflow-data:
+  mlflow-artifacts:

@@ -1,43 +1,63 @@
-
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>AI 완전 스팸 판별기</title>
+<title>AI 스팸 판별기 v2 (ML 모델)</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+  textarea { width: 100%; box-sizing: border-box; }
+  button { margin-top: 8px; padding: 8px 20px; cursor: pointer; }
+  #result { margin-top: 20px; padding: 16px; border-radius: 8px; font-size: 1.1em; }
+  .spam { background: #ffe0e0; border: 2px solid #e53935; color: #b71c1c; }
+  .ham  { background: #e0f4e0; border: 2px solid #43a047; color: #1b5e20; }
+  #model-badge { font-size: 0.8em; color: #888; margin-top: 8px; }
+</style>
 </head>
 <body>
-<textarea id="text" rows="5" cols="60"
-placeholder="Win a FREE prize now"></textarea><br><br>
-<button onclick="classify()">분류</button>
-<h3 id="result"></h3>
+<h2>AI 스팸 판별기</h2>
+<textarea id="text" rows="5" placeholder="Win a FREE prize now"></textarea><br>
+<button onclick="classify()">분류하기</button>
+<div id="result"></div>
+<div id="model-badge"></div>
+
 <script>
-function classify() {
-const text = document.getElementById("text").value.trim();
-if (!text) {
-document.getElementById("result").innerText = "안내: 분류할 문장을 입력해주세요.";
-return;
+async function classify() {
+  const text = document.getElementById("text").value.trim();
+  if (!text) {
+    showResult("안내: 분류할 문장을 입력해주세요.", null);
+    return;
+  }
+  try {
+    const res = await fetch("/classify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error("Request failed");
+    const data = await res.json();
+    const pct = (data.score * 100).toFixed(1);
+    showResult(`결과: ${data.label.toUpperCase()} (스팸 확률: ${pct}%)`, data.label);
+    fetchModelInfo();
+  } catch {
+    showResult("에러 발생", null);
+  }
 }
-fetch("/classify", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({text})
-})
-.then(res => {
-if (!res.ok) {
-throw new Error("Request failed");
+
+function showResult(msg, label) {
+  const el = document.getElementById("result");
+  el.textContent = msg;
+  el.className = label === "spam" ? "spam" : (label === "ham" ? "ham" : "");
 }
-return res.json();
-})
-.then(data => {
-document.getElementById("result").innerText =
-"결과: " + data.label + " (score=" + data.score + ")";
-})
-.catch(() => {
-document.getElementById("result").innerText = "에러 발생";
-});
+
+async function fetchModelInfo() {
+  try {
+    const res = await fetch("/model/info");
+    const data = await res.json();
+    document.getElementById("model-badge").textContent = `모델: ${data.model_version}`;
+  } catch {}
 }
+
+fetchModelInfo();
 </script>
 </body>
 </html>

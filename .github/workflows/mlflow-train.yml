@@ -4,6 +4,19 @@ on:
   push:
     branches: ["master", "main"]
   workflow_dispatch:
+    inputs:
+      max_features:
+        description: "TF-IDF max features"
+        default: "1000"
+        required: false
+      ngram_max:
+        description: "TF-IDF ngram max (1 or 2)"
+        default: "2"
+        required: false
+      nb_alpha:
+        description: "Naive Bayes smoothing alpha"
+        default: "1.0"
+        required: false
 
 jobs:
   train:
@@ -12,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -22,14 +37,24 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install mlflow
 
-      - name: Start MLFlow server
+      - name: Start MLFlow tracking server
         run: |
-          mlflow server --host 0.0.0.0 --port 5000 &
+          mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db &
           sleep 5
 
-      - name: Run training and log to MLFlow
+      - name: Train model and log to MLFlow
         env:
           MLFLOW_TRACKING_URI: http://localhost:5000
+          MAX_FEATURES: ${{ github.event.inputs.max_features || '1000' }}
+          NGRAM_MAX: ${{ github.event.inputs.ngram_max || '2' }}
+          NB_ALPHA: ${{ github.event.inputs.nb_alpha || '1.0' }}
         run: python train.py
+
+      - name: Commit trained model to repository
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions [MLFlow Train]"
+          git add models/spam_pipeline.pkl
+          git diff --staged --quiet || git commit -m "chore: update trained model [skip ci]"
+          git push || true
