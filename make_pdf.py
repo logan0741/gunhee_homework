@@ -158,16 +158,21 @@ def main():
 
     # Replace placeholder image tags in markdown
     replacements = {
+        # 섹션 1 개요: 실험 목록 + 등록 모델 목록 (서로 다른 이미지)
         "`[MLflow UI 실험 목록 화면 캡처 첨부]`": "![MLflow 실험 목록](screenshots/04_mlflow_experiments.png)",
-        "`[MLflow SpamClassifier 모델 레지스트리 화면 캡처 첨부]`": "![MLflow SpamClassifier](screenshots/05_mlflow_model_detail.png)",
-        "`[GitHub Actions CI 성공 화면 캡처 첨부]`": "![GitHub Actions](screenshots/06_github_actions.png)",
-        "`[GitHub Actions MLflow Auto Train 성공 화면 캡처 첨부]`": "![MLflow Auto Train](screenshots/06_github_actions.png)",
+        "`[MLflow SpamClassifier 모델 레지스트리 화면 캡처 첨부]`": "![MLflow 등록 모델 목록](screenshots/05_mlflow_models.png)",
+        # 섹션 6 CI/CD: CI 성공 화면 + MLflow 학습 결과 Run 상세 (서로 다른 이미지)
+        "`[GitHub Actions CI 성공 화면 캡처 첨부]`": "![GitHub Actions CI](screenshots/06_github_actions.png)",
+        "`[GitHub Actions MLflow Auto Train 성공 화면 캡처 첨부]`": "![MLflow Auto Train 실행 결과](screenshots/07_mlflow_run_detail.png)",
+        # 섹션 8 MLflow: 실험 목록 + Run 상세 + 버전 상세 (모두 다른 이미지)
         "`[MLflow Experiments 탭 - 3개 실험 목록 캡처 첨부]`": "![MLflow 실험 목록](screenshots/04_mlflow_experiments.png)",
         "`[MLflow Run 상세 - 파라미터/메트릭 화면 캡처 첨부]`": "![MLflow Run 상세](screenshots/07_mlflow_run_detail.png)",
-        "`[MLflow Models 탭 - SpamClassifier 버전 목록 캡처 첨부]`": "![MLflow Models](screenshots/05_mlflow_model_detail.png)",
-        "`[MLflow Models - SpamClassifier 버전 목록 캡처 첨부]`": "![MLflow Models](screenshots/05_mlflow_model_detail.png)",
-        "`[GitHub Issues - 자동 생성된 에러 이슈 캡처 첨부]`": "![분류 결과](screenshots/08_classify_result.png)",
+        "`[MLflow Models 탭 - SpamClassifier 버전 목록 캡처 첨부]`": "![SpamClassifier 버전 상세](screenshots/05_mlflow_model_detail.png)",
+        # 섹션 12 롤백: 등록 모델 목록 + git 이력 (서로 다른 이미지)
+        "`[MLflow Models - SpamClassifier 버전 목록 캡처 첨부]`": "![MLflow 등록 모델 목록](screenshots/05_mlflow_models.png)",
         "`[rollback.py --list 실행 결과 캡처 첨부]`": "![Git 커밋 이력](screenshots/09_git_log.png)",
+        # 섹션 11: 분류 결과 화면 (GitHub Issue 캡처 대용)
+        "`[GitHub Issues - 자동 생성된 에러 이슈 캡처 첨부]`": "![에러 분류 결과](screenshots/08_classify_result.png)",
         "`[Render.com 배포 화면 캡처 첨부]`": "",
         "`[배포된 서비스 접속 화면 캡처 첨부]`": "",
     }
