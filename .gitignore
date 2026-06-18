@@ -13,8 +13,9 @@ mlruns/
 mlartifacts/
 mlflow.db
 
-# 보고서 파일 (로컬 전용)
-기말프로젝트_보고서_*.md
-기말프로젝트_보고서_*.pdf
-기말프로젝트_보고서_*.html
+# 보고서/문서 파일 (로컬 전용, README.md 제외)
+*.md
+!README.md
+*.pdf
+*.html
 make_pdf.py
