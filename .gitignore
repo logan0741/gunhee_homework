@@ -12,3 +12,9 @@ pytest-cache-files-*/
 mlruns/
 mlartifacts/
 mlflow.db
+
+# 보고서 파일 (로컬 전용)
+기말프로젝트_보고서_*.md
+기말프로젝트_보고서_*.pdf
+기말프로젝트_보고서_*.html
+make_pdf.py
