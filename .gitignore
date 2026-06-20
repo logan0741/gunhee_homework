@@ -19,3 +19,7 @@ mlflow.db
 *.pdf
 *.html
 make_pdf.py
+
+# Final packaged submission folder
+!final_submission_214466/
+!final_submission_214466/**

@@ -89,3 +89,7 @@ Example response:
 ## Notes
 
 Local report files, generated PDFs, generated HTML files, MLflow runs, and cache files are excluded from Git. Only source code, tests, workflows, the trained model file, and this README are intended to be tracked.
+
+## Final Submission Folder
+
+The `final_submission_214466/` folder contains the project files arranged in pipeline order and includes the final report PDF.
