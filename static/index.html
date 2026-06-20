@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>AI 스팸 판별기 v2 (ML 모델)</title>
+<title>SpamCheck v2</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
   textarea { width: 100%; box-sizing: border-box; }
@@ -14,9 +14,9 @@
 </style>
 </head>
 <body>
-<h2>AI 스팸 판별기</h2>
+<h2>SpamCheck</h2>
 <textarea id="text" rows="5" placeholder="Win a FREE prize now"></textarea><br>
-<button onclick="classify()">분류하기</button>
+<button onclick="classify()">Classify</button>
 <div id="result"></div>
 <div id="model-badge"></div>
 
@@ -24,7 +24,7 @@
 async function classify() {
   const text = document.getElementById("text").value.trim();
   if (!text) {
-    showResult("안내: 분류할 문장을 입력해주세요.", null);
+    showResult("Please enter text to classify.", null);
     return;
   }
   try {
@@ -36,10 +36,10 @@ async function classify() {
     if (!res.ok) throw new Error("Request failed");
     const data = await res.json();
     const pct = (data.score * 100).toFixed(1);
-    showResult(`결과: ${data.label.toUpperCase()} (스팸 확률: ${pct}%)`, data.label);
+    showResult(`Result: ${data.label.toUpperCase()} (spam score: ${pct}%)`, data.label);
     fetchModelInfo();
   } catch {
-    showResult("에러 발생", null);
+    showResult("Request failed.", null);
   }
 }
 
@@ -53,7 +53,7 @@ async function fetchModelInfo() {
   try {
     const res = await fetch("/model/info");
     const data = await res.json();
-    document.getElementById("model-badge").textContent = `모델: ${data.model_version}`;
+    document.getElementById("model-badge").textContent = `Model: ${data.model_version}`;
   } catch {}
 }
 

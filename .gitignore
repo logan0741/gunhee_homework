@@ -8,12 +8,12 @@ __pycache__/
 .tmp_pytest/
 pytest-cache-files-*/
 
-# MLFlow local tracking (generated, not committed)
+# MLflow local tracking output
 mlruns/
 mlartifacts/
 mlflow.db
 
-# 보고서/문서 파일 (로컬 전용, README.md 제외)
+# Local report and generated document files. Keep README.md tracked.
 *.md
 !README.md
 *.pdf

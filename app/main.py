@@ -50,11 +50,15 @@ async def classify(payload: ClassifyRequest):
 
     try:
         if text == "crash":
-            raise RuntimeError("의도적 장애 추가")
+            raise RuntimeError("intentional failure for logging test")
 
         label, score = check_spam(text)
-        logger.info("OK /classify | model=%s | label=%s score=%s",
-                    get_model_version(), label, score)
+        logger.info(
+            "OK /classify | model=%s | label=%s score=%s",
+            get_model_version(),
+            label,
+            score,
+        )
         return {"label": label, "score": score}
 
     except Exception as exc:
